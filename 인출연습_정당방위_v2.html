@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>다시 읽기와 떠올려 보기</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:#07090e;height:100%;overflow:hidden;
+    font-family:'Pretendard','Noto Sans KR','Malgun Gothic',system-ui,sans-serif}
+  #wrap{display:flex;flex-direction:column;align-items:center}
+  #stage{display:block;background:#0b0f16}
+  #bar{width:1600px;background:#000;color:#8b95a5;display:flex;align-items:center;
+    gap:16px;padding:14px 22px;font-size:15px}
+  button{background:#1b222e;color:#d5dce6;border:1px solid #2c3543;padding:8px 18px;
+    border-radius:6px;font-size:15px;cursor:pointer;font-family:inherit}
+  button:hover{background:#252e3d}
+  button.on{background:#2f6f4f;border-color:#3d8a63;color:#eafff4}
+  #scrub{flex:1;accent-color:#6aa9e0}
+  #tlabel{width:104px;text-align:right;font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="stage" width="1600" height="900"></canvas>
+  <div id="bar">
+    <button id="play">일시정지</button>
+    <button id="reset">처음으로</button>
+    <button class="sp" data-s="0.5">0.5배</button>
+    <button class="sp on" data-s="1">1배</button>
+    <button class="sp" data-s="1.5">1.5배</button>
+    <input id="scrub" type="range" min="0" max="5200" value="0">
+    <span id="tlabel">0.0 / 52.0초</span>
+  </div>
+</div>
+<script>
+const cv=document.getElementById('stage'), ctx=cv.getContext('2d');
+const DPR=Math.min(devicePixelRatio||1,2);
+cv.width=1600*DPR; cv.height=900*DPR; cv.style.width='1600px'; cv.style.height='900px';
+ctx.scale(DPR,DPR);
+
+const DUR=52, ROUNDS=[3,10,17,24,31], RLEN=5, EXAM=40;
+
+// 정당방위라는 지식을 이루는 조각들
+const NODES=[
+  {x:0,   y:-108, t:'정당방위',      lx:0,   ly:-132, al:'center'},
+  {x:118, y:-36,  t:'요건 세 가지',  lx:140, ly:-36,  al:'left'},
+  {x:78,  y:92,   t:'상당한 이유',   lx:100, ly:106,  al:'left'},
+  {x:-78, y:92,   t:'판례',          lx:-100,ly:106,  al:'right'},
+  {x:-118,y:-36,  t:'틀렸던 문제',   lx:-140,ly:-36,  al:'right'},
+  {x:0,   y:6,    t:'침해의 현재성', lx:0,   ly:44,   al:'center'}
+];
+const EDGES=[[0,1],[1,2],[2,3],[3,4],[4,0],[5,0],[5,1],[5,2],[5,3],[5,4],[0,2],[1,4]];
+const ORDER=[0,5,1,2,3,4];
+
+function glow(x,y,r,c,a){const g=ctx.createRadialGradient(x,y,0,x,y,r);
+  g.addColorStop(0,c.replace('A',a));g.addColorStop(1,c.replace('A',0));
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();}
+
+function progress(t){
+  let done=0, cur=null;
+  for(const r of ROUNDS){
+    if(t>=r+RLEN) done++;
+    else if(t>=r){ cur={p:(t-r)/RLEN}; break; }
+  }
+  return {done,cur};
+}
+
+function drawRow(yT,mode,title,t){
+  const bx=205, by=yT+232, nx=690, ny=yT+228, gx=1130;
+  const {done,cur}=progress(t);
+  const isRead = mode==='read';
+  const OUT = isRead ? done*0.2 : 0.06;
+  const IN  = isRead ? 0.06     : done*0.2;
+  const N=NODES.length;
+
+  ctx.textAlign='left';
+  ctx.fillStyle='#e8edf4'; ctx.font='600 27px Pretendard,"Noto Sans KR",sans-serif';
+  ctx.fillText(title,58,yT+46);
+
+  // 책
+  ctx.save(); ctx.translate(bx,by);
+  if(isRead){
+    ctx.fillStyle='#e6e2d6'; ctx.strokeStyle='#9a9384'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(-92,-62); ctx.lineTo(0,-52); ctx.lineTo(0,62); ctx.lineTo(-92,72); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(92,-62); ctx.lineTo(0,-52); ctx.lineTo(0,62); ctx.lineTo(92,72); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle='#b3ab99'; ctx.lineWidth=2;
+    for(let i=0;i<7;i++){ const y=-38+i*15;
+      ctx.beginPath(); ctx.moveTo(-80,y); ctx.lineTo(-12,y+1); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(12,y+1); ctx.lineTo(80,y); ctx.stroke(); }
+  } else {
+    ctx.fillStyle='#3a4152'; ctx.strokeStyle='#5c6577'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.roundRect(-62,-70,124,140,6); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#2b3140'; ctx.fillRect(-62,-70,15,140);
+  }
+  ctx.restore();
+  ctx.textAlign='center'; ctx.fillStyle='#7c8798';
+  ctx.font='400 16px Pretendard,"Noto Sans KR",sans-serif';
+  ctx.fillText(isRead?'책을 펴고 읽는다':'책을 덮고 떠올린다',bx,by+108);
+
+  // 활성
+  const act=new Array(N).fill(0); let effort=0, examOn=false;
+  if(cur){
+    if(isRead){ const on=Math.min(cur.p*3,1); for(let i=0;i<N;i++) act[i]=on; }
+    else {
+      if(cur.p<0.18){ act[0]=cur.p/0.18*0.6; effort=cur.p/0.18; }
+      else if(cur.p<0.42){ act[0]=0.6; effort=1; }
+      else { act[0]=1; const q=(cur.p-0.42)/0.42;
+        for(let k=1;k<N;k++){ const s=(k-1)/(N-1);
+          act[ORDER[k]]=Math.min(Math.max((q-s*0.8)/0.18,0),1); } }
+    }
+  }
+  if(t>=EXAM){ examOn=true; const q=Math.min((t-EXAM)/6,1);
+    act.fill(0); act[0]=Math.min(q*4,1);
+    if(isRead){ act[5]=Math.min(Math.max((q-0.3)*3,0),1)*0.5;
+                act[1]=Math.min(Math.max((q-0.55)*3,0),1)*0.25; }
+    else { for(let k=1;k<N;k++){ const s=(k-1)/(N-1);
+             act[ORDER[k]]=Math.min(Math.max((q-0.18-s*0.55)/0.15,0),1); } }
+  }
+
+  // 글자에서 오는 길
+  if(isRead && !examOn){
+    ctx.strokeStyle='rgba(125,211,252,'+(cur?0.9:0.35)+')';
+    ctx.lineWidth=2+OUT*16; ctx.lineCap='round';
+    for(const i of [4,3,0,5]){
+      ctx.beginPath(); ctx.moveTo(bx+96,by-14+i*6);
+      ctx.quadraticCurveTo((bx+nx)/2,by-46, nx+NODES[i].x,ny+NODES[i].y); ctx.stroke(); }
+  }
+
+  // 조각끼리 잇는 길
+  for(const [a,b] of EDGES){
+    const x1=nx+NODES[a].x,y1=ny+NODES[a].y,x2=nx+NODES[b].x,y2=ny+NODES[b].y;
+    const lit=Math.min(act[a],act[b]);
+    ctx.strokeStyle='rgba(150,190,150,'+(0.16+IN*0.5)+')';
+    ctx.lineWidth=1.5+IN*11; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    if(lit>0.05){ ctx.strokeStyle='rgba(182,242,79,'+lit*0.9+')';
+      ctx.lineWidth=1.5+IN*11; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); }
+  }
+
+  // 조각
+  for(let i=0;i<N;i++){
+    const x=nx+NODES[i].x, y=ny+NODES[i].y;
+    if(act[i]>0.05) glow(x,y,36,'rgba(182,242,79,A)',0.55*act[i]);
+    ctx.fillStyle=act[i]>0.05?'#b6f24f':'#39485c';
+    ctx.beginPath(); ctx.arc(x,y,14,0,7); ctx.fill();
+    ctx.strokeStyle='#6d8199'; ctx.lineWidth=2; ctx.stroke();
+    ctx.textAlign=NODES[i].al;
+    ctx.fillStyle=act[i]>0.4?'#dff5b4':'#7a8797';
+    ctx.font='500 15px Pretendard,"Noto Sans KR",sans-serif';
+    ctx.fillText(NODES[i].t, nx+NODES[i].lx, ny+NODES[i].ly);
+  }
+  ctx.textAlign='center';
+  if(effort>0){ ctx.fillStyle='rgba(240,179,87,'+effort+')';
+    ctx.font='500 17px Pretendard,"Noto Sans KR",sans-serif';
+    ctx.fillText('나머지를 떠올리려고 애쓰는 중',nx,ny-170); }
+  if(!isRead && cur && cur.p>0.86){ const g=(cur.p-0.86)/0.14;
+    glow(nx,ny,165,'rgba(95,158,90,A)',0.3*(1-Math.abs(g*2-1)));
+    ctx.fillStyle='rgba(150,205,125,'+(1-Math.abs(g*2-1))+')';
+    ctx.font='500 17px Pretendard,"Noto Sans KR",sans-serif';
+    ctx.fillText('떠올린 자리가 다시 굳는다',nx,ny+152); }
+  ctx.fillStyle='#6b7788'; ctx.font='400 15px Pretendard,"Noto Sans KR",sans-serif';
+  ctx.fillText('정당방위와 관련된 기억 조각들',nx,ny+184);
+
+  // 막대 둘
+  const gy=yT+126;
+  const bars=[['책을 보면 떠오르는 힘',OUT,'#3f6f9e'],
+              ['아무것도 안 보고 떠올리는 힘',IN,'#5f9e5a']];
+  ctx.textAlign='left';
+  bars.forEach((b,i)=>{ const y=gy+i*78;
+    ctx.fillStyle='#9aa6b6'; ctx.font='500 16px Pretendard,"Noto Sans KR",sans-serif';
+    ctx.fillText(b[0],gx,y);
+    ctx.fillStyle='#151d29'; ctx.strokeStyle='#283343'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.roundRect(gx,y+12,370,24,12); ctx.fill(); ctx.stroke();
+    ctx.fillStyle=b[2]; ctx.beginPath();
+    ctx.roundRect(gx,y+12,370*Math.min(b[1],1),24,12); ctx.fill(); });
+
+  ctx.fillStyle='#5d6879'; ctx.font='400 16px Pretendard,"Noto Sans KR",sans-serif';
+  ctx.fillText(t<EXAM?((isRead?'읽기 ':'떠올려 보기 ')+done+' / 5회'):'시험 문제: “정당방위”',gx,gy+192);
+  if(t<EXAM) for(let i=0;i<5;i++){
+    ctx.fillStyle=i<done?'#7dd3fc':'#2c3644';
+    ctx.beginPath(); ctx.arc(gx+150+i*26,gy+186,7,0,7); ctx.fill(); }
+  if(examOn){ ctx.fillStyle=isRead?'#c26b5e':'#8fc878';
+    ctx.font='500 18px Pretendard,"Noto Sans KR",sans-serif';
+    ctx.fillText(isRead?'단어만 떠오르고 나머지는 막힌다':'단어 하나에서 나머지가 따라 나온다',gx,gy+232); }
+}
+
+function cap(t){
+  if(t<3)  return '정당방위를 공부합니다. 위는 책을 다섯 번 다시 읽고, 아래는 다섯 번 덮고 떠올립니다.';
+  if(t<10) return '책을 읽으면 글자가 조각들을 한꺼번에 켭니다. 읽는 동안은 다 아는 것처럼 느껴집니다.';
+  if(t<17) return '덮고 떠올리면 정당방위라는 단어 하나에서 시작해 나머지를 스스로 불러와야 합니다.';
+  if(t<24) return '이때 조각과 조각을 잇는 연결이 굵어집니다.';
+  if(t<31) return '떠올린 기억은 잠깐 물러졌다가 다시 굳습니다. 그래서 떠올린 만큼 남습니다.';
+  if(t<40) return '다섯 번이 끝났습니다. 두 사람이 기른 힘이 서로 다릅니다.';
+  if(t<46) return '시험 문제에는 정당방위라는 단어만 나옵니다. 나머지는 스스로 채워야 합니다.';
+  return '다섯 번 읽은 쪽은 책을 볼 때만 떠올릴 수 있습니다. 시험장에는 책이 없습니다.';
+}
+
+let t=0,playing=true,speed=1,last=performance.now();
+function frame(now){
+  const dt=(now-last)/1000; last=now;
+  if(playing){t+=dt*speed; if(t>DUR){t=DUR;playing=false;btnPlay.textContent='다시 재생';}}
+  ctx.fillStyle='#0b0f16'; ctx.fillRect(0,0,1600,900);
+  ctx.strokeStyle='#1a2230'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(50,432); ctx.lineTo(1550,432); ctx.stroke();
+  drawRow(0,  'read','수험서 5회독',t);
+  drawRow(442,'recall','수험서 1회독 후 책을 덮고 내용 떠올려 보기',t);
+  ctx.textAlign='center';
+  ctx.fillStyle='#c4cedb'; ctx.font='400 24px Pretendard,"Noto Sans KR",sans-serif';
+  ctx.fillText(cap(t),800,880);
+  scrub.value=Math.round(t*100); tlabel.textContent=t.toFixed(1)+' / '+DUR.toFixed(1)+'초';
+  requestAnimationFrame(frame);
+}
+const btnPlay=document.getElementById('play'),scrub=document.getElementById('scrub'),
+      tlabel=document.getElementById('tlabel');
+btnPlay.onclick=()=>{if(t>=DUR)t=0;playing=!playing;btnPlay.textContent=playing?'일시정지':'재생';};
+document.getElementById('reset').onclick=()=>{t=0;playing=true;btnPlay.textContent='일시정지';};
+document.querySelectorAll('.sp').forEach(b=>b.onclick=()=>{speed=parseFloat(b.dataset.s);
+  document.querySelectorAll('.sp').forEach(x=>x.classList.remove('on'));b.classList.add('on');});
+scrub.oninput=()=>{t=scrub.value/100;};
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
