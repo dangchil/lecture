@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>같은 아홉 번, 다른 결과</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:#07090e;height:100%;overflow:hidden;
+    font-family:'Pretendard','Noto Sans KR','Malgun Gothic',system-ui,sans-serif}
+  #wrap{display:flex;flex-direction:column;align-items:center}
+  #stage{display:block;background:#0b0f16}
+  #bar{width:1600px;background:#000;color:#8b95a5;display:flex;align-items:center;
+    gap:16px;padding:14px 22px;font-size:15px}
+  button{background:#1b222e;color:#d5dce6;border:1px solid #2c3543;padding:8px 18px;
+    border-radius:6px;font-size:15px;cursor:pointer;font-family:inherit}
+  button:hover{background:#252e3d}
+  button.on{background:#2f6f4f;border-color:#3d8a63;color:#eafff4}
+  #scrub{flex:1;accent-color:#6aa9e0}
+  #tlabel{width:100px;text-align:right;font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="stage" width="1600" height="900"></canvas>
+  <div id="bar">
+    <button id="play">일시정지</button>
+    <button id="reset">처음으로</button>
+    <button class="sp" data-s="0.5">0.5배</button>
+    <button class="sp on" data-s="1">1배</button>
+    <button class="sp" data-s="1.5">1.5배</button>
+    <input id="scrub" type="range" min="0" max="3800" value="0">
+    <span id="tlabel">0.0 / 38.0초</span>
+  </div>
+</div>
+<script>
+const cv=document.getElementById('stage'), ctx=cv.getContext('2d');
+const DPR=Math.min(devicePixelRatio||1,2);
+cv.width=1600*DPR; cv.height=900*DPR; cv.style.width='1600px'; cv.style.height='900px';
+ctx.scale(DPR,DPR);
+
+const DUR=38, LOCK=8, T_ON=0.4, T_OFF=2.4, TAU=5, EARLY=8, LATE=22;
+const S_MASS =[2.0,2.7,3.4,4.1,4.8,5.5,6.2,6.9,7.6];
+const S_SPACE=[2.0,2.7,3.4, 13.0,13.7,14.4, 24.0,24.7,25.4];
+const mkFire=s=>{const o=[];let u=-99;for(const x of s){if(x>=u){o.push(x);u=x+LOCK;}}return o;};
+const F_MASS=mkFire(S_MASS), F_SPACE=mkFire(S_SPACE);
+const early=(s,t)=>s.reduce((v,x)=>t>=x?v+EARLY*Math.exp(-(t-x)/TAU):v,0);
+const late=(fr,t)=>fr.reduce((v,x)=>{const a=x+T_ON,b=x+T_OFF;
+  return t>=b?v+LATE:(t>a?v+LATE*(t-a)/(b-a):v);},0);
+const lockAmt=(fr,t)=>{for(const x of fr) if(t>=x&&t<x+LOCK) return (x+LOCK-t)/LOCK; return 0;};
+const fireGlow=(fr,t)=>{for(const x of fr) if(t>=x&&t<x+0.8) return 1-(t-x)/0.8; return 0;};
+
+function glow(x,y,r,c,a){const g=ctx.createRadialGradient(x,y,0,x,y,r);
+  g.addColorStop(0,c.replace('A',a));g.addColorStop(1,c.replace('A',0));
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();}
+
+function branch(x,y,ang,len,w,depth){
+  const nx=x+Math.cos(ang)*len, ny=y+Math.sin(ang)*len;
+  ctx.lineWidth=w; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(nx,ny); ctx.stroke();
+  if(depth>0){ branch(nx,ny,ang-0.44,len*0.6,Math.max(w*0.6,1.2),depth-1);
+               branch(nx,ny,ang+0.44,len*0.6,Math.max(w*0.6,1.2),depth-1); }
+}
+
+function release(stim,t){
+  for(const s of stim){ const u=t-(s+0.5);
+    if(u>=0&&u<1.4){ let p,ph;
+      if(u<0.35){ph=0;p=u/0.35;} else if(u<0.85){ph=1;p=(u-0.35)/0.5;} else {ph=2;p=(u-0.85)/0.55;}
+      return {ph,p}; } }
+  return null;
+}
+
+function drawRow(yT,title,stim,fire,t){
+  const cy=yT+248;
+  const cx=180, axStart=cx+50, axEnd=668, termX=690;
+  const rx=905, spineX=742;
+  const E=early(stim,t), L=late(fire,t), S=Math.min(E+L,100);
+  const lk=lockAmt(fire,t), fg=fireGlow(fire,t), rel=release(stim,t);
+  const hr=9+S*0.13;                 // 가시 머리 크기
+  const dw=7+S*0.075;                // 수상돌기 굵기
+
+  ctx.textAlign='left';
+  ctx.fillStyle='#e8edf4'; ctx.font='600 26px Pretendard,"Noto Sans KR",sans-serif';
+  ctx.fillText(title,58,yT+48);
+
+  // ── 보내는 뉴런 ──
+  ctx.strokeStyle='#41556f'; ctx.lineCap='round';
+  for(const a of [2.1,2.6,3.1,3.6,4.1,4.6]) branch(cx,cy,a,50,6,2);
+  ctx.fillStyle='#1d2836'; ctx.strokeStyle='#41556f'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.ellipse(cx,cy,46,38,0,0,7); ctx.fill(); ctx.stroke();
+
+  ctx.strokeStyle='#33445b'; ctx.lineWidth=9;
+  ctx.beginPath(); ctx.moveTo(axStart,cy); ctx.lineTo(axEnd,cy); ctx.stroke();
+  ctx.fillStyle='#2a394d'; ctx.strokeStyle='#41556f'; ctx.lineWidth=2;
+  for(let x=axStart+40;x<axEnd-50;x+=86){
+    ctx.beginPath(); ctx.ellipse(x+28,cy,32,14,0,0,7); ctx.fill(); ctx.stroke(); }
+
+  for(const s of stim){ const d=t-s;
+    if(d>=0&&d<0.5){ const x=axStart+(axEnd-axStart)*(d/0.5);
+      glow(x,cy,26,'rgba(125,211,252,A)',0.6);
+      ctx.fillStyle='#cfeeff'; ctx.beginPath(); ctx.arc(x,cy,7,0,7); ctx.fill(); } }
+
+  if(fg>0) glow(cx,cy,96,'rgba(163,230,53,A)',0.45*fg);
+  ctx.fillStyle=lk>0?'#3b4757':(fg>0?'#b6f24f':'#7590ad');
+  ctx.beginPath(); ctx.arc(cx,cy,18,0,7); ctx.fill();
+  ctx.strokeStyle='#9db1c6'; ctx.lineWidth=2; ctx.stroke();
+
+  ctx.textAlign='center'; ctx.fillStyle='#5d6879';
+  ctx.font='400 14px Pretendard,"Noto Sans KR",sans-serif';
+  ctx.fillText('핵',cx,cy+38); ctx.fillText('세포체',cx,cy+96);
+  ctx.fillText('축삭',(axStart+axEnd)/2,cy+42);
+  ctx.fillText('보내는 뉴런',cx,yT+112); ctx.fillText('받는 뉴런',rx,yT+112);
+
+  ctx.font='500 16px Pretendard,"Noto Sans KR",sans-serif';
+  if(lk>0){ ctx.fillStyle='#8892a0'; ctx.fillText('당분간 더 못 만듦',cx,cy-84);
+    ctx.strokeStyle='#4a5566'; ctx.lineWidth=4;
+    ctx.beginPath(); ctx.arc(cx,cy-62,12,-Math.PI/2,-Math.PI/2+6.283*(1-lk)); ctx.stroke(); }
+  else if(fg>0){ ctx.fillStyle='#b6f24f'; ctx.fillText('새 단백질 만드는 중',cx,cy-84); }
+  else { ctx.fillStyle='#6f8ba8'; ctx.fillText('만들 준비됨',cx,cy-84); }
+
+  for(const x0 of fire){ const a=x0+T_ON,b=x0+T_OFF;
+    if(t>a&&t<b+0.3){ for(let i=0;i<5;i++){
+      const p=Math.min(Math.max((t-a-i*0.08)/(b-a),0),1); if(p<=0||p>=1) continue;
+      const x=cx+(termX-cx)*p, y=cy+Math.sin(p*10+i)*9;
+      glow(x,y,15,'rgba(163,230,53,A)',0.55);
+      ctx.fillStyle='#c9f56b'; ctx.beginPath(); ctx.arc(x,y,5,0,7); ctx.fill(); } } }
+
+  // ── 받는 뉴런: 세포체와 수상돌기 ──
+  ctx.strokeStyle='#8a6f3d'; ctx.lineCap='round';
+  for(const a of [2.35,3.95,5.0,0.5,1.35]) branch(rx,cy,a,48,6,2);
+
+  // 시냅스로 이어지는 수상돌기 — 곧지 않게, 잔가지를 달고
+  const pts=[[rx-40,cy],[850,cy-9],[812,cy+6],[788,cy-5],[spineX+hr+4,cy]];
+  ctx.strokeStyle='#a98a4e'; ctx.lineCap='round'; ctx.lineJoin='round';
+  for(let i=0;i<pts.length-1;i++){
+    ctx.lineWidth=dw*(1-i*0.10);
+    ctx.beginPath(); ctx.moveTo(pts[i][0],pts[i][1]); ctx.lineTo(pts[i+1][0],pts[i+1][1]); ctx.stroke();
+  }
+  ctx.strokeStyle='#8a6f3d'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(850,cy-9); ctx.lineTo(838,cy-38); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(812,cy+6); ctx.lineTo(802,cy+34); ctx.stroke();
+
+  ctx.fillStyle='#241d12'; ctx.strokeStyle='#8a6f3d'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.ellipse(rx,cy,44,37,0,0,7); ctx.fill(); ctx.stroke();
+  ctx.fillStyle='#6f5a33'; ctx.beginPath(); ctx.arc(rx,cy,16,0,7); ctx.fill();
+  ctx.fillStyle='#5d6879'; ctx.font='400 14px Pretendard,"Noto Sans KR",sans-serif';
+  ctx.fillText('수상돌기',818,cy+62);
+
+  // ── 시냅스: 종말과 가시가 맞닿은 자리 ──
+  ctx.fillStyle='#24405e'; ctx.strokeStyle='#5a86b5'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.ellipse(termX,cy,23,20,0,0,7); ctx.fill(); ctx.stroke();
+  ctx.fillStyle='#f0b357'; ctx.beginPath(); ctx.arc(spineX,cy,hr,0,7); ctx.fill();
+  ctx.fillStyle='#5d6879'; ctx.font='400 13px Pretendard,"Noto Sans KR",sans-serif';
+  ctx.fillText('축삭 끝',termX-6,cy-40); ctx.fillText('가시',spineX+14,cy+42);
+
+  const sxC=(termX+spineX)/2+2, sR=46;
+  ctx.strokeStyle='#69809b'; ctx.lineWidth=2; ctx.setLineDash([5,4]);
+  ctx.beginPath(); ctx.arc(sxC,cy,sR,0,7); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle='#8fa3ba'; ctx.font='500 15px Pretendard,"Noto Sans KR",sans-serif';
+  ctx.fillText('시냅스',sxC,cy+sR+22);
+
+  // ── 확대 ──
+  const mx=1100,my=yT+228,mr=96;
+  ctx.strokeStyle='#2b3648'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(sxC+sR*0.72,cy-sR*0.7); ctx.lineTo(mx-mr*0.72,my-mr*0.72); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(sxC+sR*0.72,cy+sR*0.7); ctx.lineTo(mx-mr*0.72,my+mr*0.72); ctx.stroke();
+
+  ctx.save(); ctx.beginPath(); ctx.arc(mx,my,mr,0,7); ctx.clip();
+  ctx.fillStyle='#0e141d'; ctx.fillRect(mx-mr,my-mr,mr*2,mr*2);
+  const memTop=my-22, memBot=my+2;
+  ctx.fillStyle='#22405f'; ctx.beginPath();
+  ctx.moveTo(mx-mr,my-mr); ctx.lineTo(mx+mr,my-mr);
+  ctx.lineTo(mx+mr,memTop); ctx.quadraticCurveTo(mx,memTop+16,mx-mr,memTop); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='#4d7ba8'; ctx.lineWidth=3; ctx.stroke();
+  for(let i=0;i<7;i++){ const a=i*0.9+t*0.5;
+    ctx.fillStyle='#2f5f8c'; ctx.strokeStyle='#7dd3fc'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.arc(mx-62+i*21, my-58+Math.sin(a)*6, 9,0,7); ctx.fill(); ctx.stroke(); }
+
+  const sw=48+S*0.60;
+  ctx.fillStyle='#3b2f19'; ctx.beginPath();
+  ctx.moveTo(mx-mr,my+mr); ctx.lineTo(mx-mr,memBot+12);
+  ctx.quadraticCurveTo(mx-sw,memBot-6,mx,memBot-6);
+  ctx.quadraticCurveTo(mx+sw,memBot-6,mx+mr,memBot+12);
+  ctx.lineTo(mx+mr,my+mr); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='#a98a4e'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(mx-mr,memBot+12);
+  ctx.quadraticCurveTo(mx-sw,memBot-6,mx,memBot-6);
+  ctx.quadraticCurveTo(mx+sw,memBot-6,mx+mr,memBot+12); ctx.stroke();
+
+  const nrec=Math.round(3+S*0.13), bound=rel&&rel.ph===1;
+  for(let i=0;i<nrec;i++){
+    const x=mx-sw*0.85+(sw*1.7)*(i+0.5)/nrec;
+    if(bound) glow(x,memBot+4,18,'rgba(240,179,87,A)',0.5);
+    ctx.fillStyle=bound?'#ffd88a':'#f0b357';
+    ctx.fillRect(x-5,memBot-8,10,18);
+  }
+  if(rel){ for(let i=0;i<8;i++){
+      const x=mx-58+i*17, jit=Math.sin(i*2.1)*4; let y;
+      if(rel.ph===0) y=memTop+2+(memBot-14-memTop)*rel.p;
+      else if(rel.ph===1) y=memBot-12+jit*0.3;
+      else y=memBot-12+(memTop+2-memBot+12)*rel.p;
+      ctx.fillStyle='#8ee0ff'; ctx.beginPath(); ctx.arc(x,y+jit*0.2,5,0,7); ctx.fill(); } }
+  ctx.restore();
+  ctx.strokeStyle='#3a4759'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.arc(mx,my,mr,0,7); ctx.stroke();
+  ctx.fillStyle='#8b7a55'; ctx.font='400 14px Pretendard,"Noto Sans KR",sans-serif';
+  ctx.fillText('노란 막대 = 수용체',mx,my+mr+24);
+
+  // ── 막대 ──
+  const gx=1250,gy=yT+158,gw=300,gh=23;
+  ctx.textAlign='left'; ctx.fillStyle='#9aa6b6';
+  ctx.font='500 16px Pretendard,"Noto Sans KR",sans-serif';
+  ctx.fillText('연결의 세기',gx,gy-12);
+  ctx.textAlign='right'; ctx.fillStyle='#e8edf4';
+  ctx.font='600 19px Pretendard,"Noto Sans KR",sans-serif';
+  ctx.fillText(Math.round(S),gx+gw,gy-12); ctx.textAlign='left';
+  ctx.fillStyle='#151d29'; ctx.strokeStyle='#283343'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.roundRect(gx,gy,gw,gh,11); ctx.fill(); ctx.stroke();
+  const lw=gw*Math.min(L,100)/100;
+  ctx.fillStyle='#5f9e5a'; ctx.beginPath(); ctx.roundRect(gx,gy,lw,gh,11); ctx.fill();
+  const ew=gw*Math.min(E,100-Math.min(L,100))/100;
+  if(ew>1){ctx.fillStyle='#3f6f9e';ctx.beginPath();ctx.roundRect(gx+lw,gy,ew,gh,[0,11,11,0]);ctx.fill();}
+
+  const tx=1250,ty=yT+272,tw=300;
+  ctx.strokeStyle='#232d3c'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(tx,ty); ctx.lineTo(tx+tw,ty); ctx.stroke();
+  for(const s of stim){ const x=tx+tw*s/DUR;
+    ctx.strokeStyle=t>=s?'#7dd3fc':'#374357'; ctx.lineWidth=4;
+    ctx.beginPath(); ctx.moveTo(x,ty-11); ctx.lineTo(x,ty+11); ctx.stroke(); }
+  const p2=tx+tw*Math.min(t,DUR)/DUR;
+  ctx.strokeStyle='#f0b357'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(p2,ty-18); ctx.lineTo(p2,ty+18); ctx.stroke();
+  ctx.fillStyle='#5d6879'; ctx.font='400 15px Pretendard,"Noto Sans KR",sans-serif';
+  ctx.fillText('읽은 횟수 '+stim.filter(s=>t>=s).length+' / '+stim.length,tx,ty+36);
+  ctx.fillStyle='#7f9a5f';
+  ctx.fillText('새 단백질 '+fire.filter(x=>t>=x).length+'번 만듦',tx,ty+58);
+}
+
+function cap(t){
+  if(t<2)  return '읽은 횟수는 아홉 번으로 같습니다. 위는 몰아서, 아래는 사이를 띄워서.';
+  if(t<9)  return '신호가 핵까지 닿으면 새 단백질이 만들어집니다. 그리고 한동안 다시 만들지 못합니다.';
+  if(t<13) return '연달아 읽은 나머지 여덟 번은 모두 그 시간 안에 들어갔습니다.';
+  if(t<22) return '사이를 띄운 쪽은 그동안 다시 만들 수 있게 됐습니다. 두 번째 단백질이 나옵니다.';
+  if(t<27) return '단백질이 시냅스에 붙어 가시 머리가 커지고 수용체가 늘어납니다.';
+  if(t<33) return '연달아 읽은 쪽은 올랐던 세기가 도로 내려갔습니다.';
+  return '같은 아홉 번인데 남은 것이 다릅니다. 수상돌기 굵기부터 다릅니다.';
+}
+
+let t=0,playing=true,speed=1,last=performance.now();
+function frame(now){
+  const dt=(now-last)/1000; last=now;
+  if(playing){t+=dt*speed; if(t>DUR){t=DUR;playing=false;btnPlay.textContent='다시 재생';}}
+  ctx.fillStyle='#0b0f16'; ctx.fillRect(0,0,1600,900);
+  ctx.strokeStyle='#1a2230'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(50,430); ctx.lineTo(1550,430); ctx.stroke();
+  drawRow(0,  'love를 연달아 아홉 번 읽기', S_MASS, F_MASS, t);
+  drawRow(440,'love를 세 번 읽고 쉬었다가, 다시 세 번 읽고 쉬었다가, 다시 세 번 읽기', S_SPACE,F_SPACE,t);
+  ctx.textAlign='center';
+  ctx.fillStyle='#c4cedb'; ctx.font='400 24px Pretendard,"Noto Sans KR",sans-serif';
+  ctx.fillText(cap(t),800,872);
+  ctx.fillStyle='#4c5666'; ctx.font='400 15px Pretendard,"Noto Sans KR",sans-serif';
+  ctx.fillText('화면의 몇 초는 실제로는 하루쯤에 해당합니다',800,895);
+  scrub.value=Math.round(t*100); tlabel.textContent=t.toFixed(1)+' / '+DUR.toFixed(1)+'초';
+  requestAnimationFrame(frame);
+}
+const btnPlay=document.getElementById('play'),scrub=document.getElementById('scrub'),
+      tlabel=document.getElementById('tlabel');
+btnPlay.onclick=()=>{if(t>=DUR)t=0;playing=!playing;btnPlay.textContent=playing?'일시정지':'재생';};
+document.getElementById('reset').onclick=()=>{t=0;playing=true;btnPlay.textContent='일시정지';};
+document.querySelectorAll('.sp').forEach(b=>b.onclick=()=>{speed=parseFloat(b.dataset.s);
+  document.querySelectorAll('.sp').forEach(x=>x.classList.remove('on'));b.classList.add('on');});
+scrub.oninput=()=>{t=scrub.value/100;};
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
