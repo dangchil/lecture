@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<title>다시 읽기와 떠올려 보기</title>
+<title>수험서 읽기 × 5회 / 책을 덮고 떠올려 보기 × 5회</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   html,body{background:#07090e;height:100%;overflow:hidden;
@@ -25,9 +25,9 @@
   <div id="bar">
     <button id="play">일시정지</button>
     <button id="reset">처음으로</button>
-    <button class="sp" data-s="0.5">0.5배</button>
     <button class="sp on" data-s="1">1배</button>
     <button class="sp" data-s="1.5">1.5배</button>
+    <button class="sp" data-s="2">2배</button>
     <input id="scrub" type="range" min="0" max="5200" value="0">
     <span id="tlabel">0.0 / 52.0초</span>
   </div>
@@ -201,8 +201,8 @@ function frame(now){
   ctx.fillStyle='#0b0f16'; ctx.fillRect(0,0,1600,900);
   ctx.strokeStyle='#1a2230'; ctx.lineWidth=2;
   ctx.beginPath(); ctx.moveTo(50,432); ctx.lineTo(1550,432); ctx.stroke();
-  drawRow(0,  'read','수험서 5회독',t);
-  drawRow(442,'recall','수험서 1회독 후 책을 덮고 내용 떠올려 보기',t);
+  drawRow(0,  'read','수험서 읽기 × 5회',t);
+  drawRow(442,'recall','수험서 1회독 후, 책을 덮고 떠올려 보기 × 5회',t);
   ctx.textAlign='center';
   ctx.fillStyle='#c4cedb'; ctx.font='400 24px Pretendard,"Noto Sans KR",sans-serif';
   ctx.fillText(cap(t),800,880);
