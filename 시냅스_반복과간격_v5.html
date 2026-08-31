@@ -75,7 +75,7 @@ function drawRow(yT,title,stim,fire,t){
   const E=early(stim,t), L=late(fire,t), S=Math.min(E+L,100);
   const lk=lockAmt(fire,t), fg=fireGlow(fire,t), rel=release(stim,t);
   const hr=9+S*0.13;                 // 가시 머리 크기
-  const dw=7+S*0.075;                // 수상돌기 굵기
+  const dw=8;                        // 수상돌기 굵기는 변하지 않는다
 
   ctx.textAlign='left';
   ctx.fillStyle='#e8edf4'; ctx.font='600 26px Pretendard,"Noto Sans KR",sans-serif';
@@ -149,7 +149,7 @@ function drawRow(yT,title,stim,fire,t){
   ctx.beginPath(); ctx.ellipse(termX,cy,23,20,0,0,7); ctx.fill(); ctx.stroke();
   ctx.fillStyle='#f0b357'; ctx.beginPath(); ctx.arc(spineX,cy,hr,0,7); ctx.fill();
   ctx.fillStyle='#5d6879'; ctx.font='400 13px Pretendard,"Noto Sans KR",sans-serif';
-  ctx.fillText('축삭 끝',termX-6,cy-40); ctx.fillText('가시',spineX+14,cy+42);
+  ctx.fillText('축삭 끝',termX-6,cy-40); ctx.fillText('수상돌기가시',spineX+22,cy+44);
 
   const sxC=(termX+spineX)/2+2, sR=46;
   ctx.strokeStyle='#69809b'; ctx.lineWidth=2; ctx.setLineDash([5,4]);
@@ -202,7 +202,7 @@ function drawRow(yT,title,stim,fire,t){
   ctx.strokeStyle='#3a4759'; ctx.lineWidth=3;
   ctx.beginPath(); ctx.arc(mx,my,mr,0,7); ctx.stroke();
   ctx.fillStyle='#8b7a55'; ctx.font='400 14px Pretendard,"Noto Sans KR",sans-serif';
-  ctx.fillText('노란 막대 = 수용체',mx,my+mr+24);
+  ctx.fillText('노란 막대는 신호를 받는 수용체입니다',mx,my+mr+24);
 
   // ── 막대 ──
   const gx=1250,gy=yT+158,gw=300,gh=23;
@@ -235,13 +235,13 @@ function drawRow(yT,title,stim,fire,t){
 }
 
 function cap(t){
-  if(t<2)  return '읽은 횟수는 아홉 번으로 같습니다. 위는 몰아서, 아래는 사이를 띄워서.';
-  if(t<9)  return '신호가 핵까지 닿으면 새 단백질이 만들어집니다. 그리고 한동안 다시 만들지 못합니다.';
-  if(t<13) return '연달아 읽은 나머지 여덟 번은 모두 그 시간 안에 들어갔습니다.';
-  if(t<22) return '사이를 띄운 쪽은 그동안 다시 만들 수 있게 됐습니다. 두 번째 단백질이 나옵니다.';
-  if(t<27) return '단백질이 시냅스에 붙어 가시 머리가 커지고 수용체가 늘어납니다.';
-  if(t<33) return '연달아 읽은 쪽은 올랐던 세기가 도로 내려갔습니다.';
-  return '같은 아홉 번인데 남은 것이 다릅니다. 수상돌기 굵기부터 다릅니다.';
+  if(t<2)  return 'love를 아홉 번 읽습니다. 위는 한자리에서, 아래는 사이를 띄워 가며 읽습니다.';
+  if(t<9)  return '신호가 핵까지 닿으면 세포가 새 단백질을 만듭니다. 한 번 만들고 나면 한동안 더 만들지 못합니다.';
+  if(t<13) return '위쪽은 더 만들지 못하는 동안 나머지 여덟 번을 다 읽어버렸습니다.';
+  if(t<22) return '아래쪽은 쉬는 사이에 다시 만들 수 있게 되었습니다. 그래서 두 번째 단백질이 나옵니다.';
+  if(t<27) return '만들어진 단백질이 시냅스에 붙습니다. 가시 머리가 커지고 수용체가 늘어납니다.';
+  if(t<33) return '위쪽은 단백질이 없어서 늘었던 수용체가 도로 빠져나갔습니다.';
+  return '읽은 횟수는 아홉 번으로 같습니다. 위쪽은 연결이 도로 약해졌고, 아래쪽은 굵어진 채로 남았습니다.';
 }
 
 let t=0,playing=true,speed=1,last=performance.now();
@@ -257,7 +257,7 @@ function frame(now){
   ctx.fillStyle='#c4cedb'; ctx.font='400 24px Pretendard,"Noto Sans KR",sans-serif';
   ctx.fillText(cap(t),800,872);
   ctx.fillStyle='#4c5666'; ctx.font='400 15px Pretendard,"Noto Sans KR",sans-serif';
-  ctx.fillText('화면의 몇 초는 실제로는 하루쯤에 해당합니다',800,895);
+  ctx.fillText('화면에서 흐르는 몇 초는 실제로는 하루쯤 되는 시간입니다',800,895);
   scrub.value=Math.round(t*100); tlabel.textContent=t.toFixed(1)+' / '+DUR.toFixed(1)+'초';
   requestAnimationFrame(frame);
 }
