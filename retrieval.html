@@ -40,17 +40,17 @@ ctx.scale(DPR,DPR);
 
 const DUR=52, ROUNDS=[3,10,17,24,31], RLEN=5, EXAM=40;
 
-// 정당방위라는 지식을 이루는 조각들
+// 정당방위라는 지식을 이루는 조각들 (3층 구조: 정당방위 → 요건/과잉방위/판례 → 요건의 하위 3요소)
 const NODES=[
-  {x:0,   y:-108, t:'정당방위',      lx:0,   ly:-132, al:'center'},
-  {x:118, y:-36,  t:'요건 세 가지',  lx:140, ly:-36,  al:'left'},
-  {x:78,  y:92,   t:'상당한 이유',   lx:100, ly:106,  al:'left'},
-  {x:-78, y:92,   t:'판례',          lx:-100,ly:106,  al:'right'},
-  {x:-118,y:-36,  t:'틀렸던 문제',   lx:-140,ly:-36,  al:'right'},
-  {x:0,   y:6,    t:'침해의 현재성', lx:0,   ly:44,   al:'center'}
+  {x:0,   y:-130, t:'정당방위',          lx:0,   ly:-154, al:'center'},
+  {x:0,   y:-15,  t:'요건',              lx:24,  ly:-9,   al:'left'},
+  {x:-150,y:-15,  t:'과잉방위',          lx:-172,ly:-15,  al:'right'},
+  {x:150, y:-15,  t:'판례',              lx:172, ly:-15,  al:'left'},
+  {x:-105,y:105,  t:'현재의 부당한 침해', lx:-105,ly:136,  al:'center'},
+  {x:0,   y:120,  t:'방위하기 위한 행위', lx:0,   ly:151,  al:'center'},
+  {x:105, y:105,  t:'상당한 이유',        lx:105, ly:136,  al:'center'}
 ];
-const EDGES=[[0,1],[1,2],[2,3],[3,4],[4,0],[5,0],[5,1],[5,2],[5,3],[5,4],[0,2],[1,4]];
-const ORDER=[0,5,1,2,3,4];
+const EDGES=[[0,1],[0,2],[0,3],[1,4],[1,5],[1,6]];
 
 function glow(x,y,r,c,a){const g=ctx.createRadialGradient(x,y,0,x,y,r);
   g.addColorStop(0,c.replace('A',a));g.addColorStop(1,c.replace('A',0));
@@ -106,22 +106,28 @@ function drawRow(yT,mode,title,t){
       else if(cur.p<0.42){ act[0]=0.6; effort=1; }
       else { act[0]=1; const q=(cur.p-0.42)/0.42;
         for(let k=1;k<N;k++){ const s=(k-1)/(N-1);
-          act[ORDER[k]]=Math.min(Math.max((q-s*0.8)/0.18,0),1); } }
+          act[k]=Math.min(Math.max((q-s*0.8)/0.18,0),1); } }
     }
   }
   if(t>=EXAM){ examOn=true; const q=Math.min((t-EXAM)/6,1);
     act.fill(0); act[0]=Math.min(q*4,1);
-    if(isRead){ act[5]=Math.min(Math.max((q-0.3)*3,0),1)*0.5;
+    if(isRead){ act[4]=Math.min(Math.max((q-0.3)*3,0),1)*0.5;
                 act[1]=Math.min(Math.max((q-0.55)*3,0),1)*0.25; }
-    else { for(let k=1;k<N;k++){ const s=(k-1)/(N-1);
-             act[ORDER[k]]=Math.min(Math.max((q-0.18-s*0.55)/0.15,0),1); } }
+    else {
+      // 1단계(인출 실패): 정당방위·요건·판례·현재의 부당한 침해만 켜짐
+      for(const i of [1,3,4]) act[i]=Math.min(Math.max((q-0.05)/0.3,0),1);
+      // 2단계(정답 확인): 방위하기 위한 행위·상당한 이유가 켜지고 요건과의 선도 함께 밝아짐
+      for(const i of [5,6]) act[i]=Math.min(Math.max((q-0.4)/0.25,0),1);
+      // 3단계: 과잉방위까지 켜지며 전체가 밝아짐
+      act[2]=Math.min(Math.max((q-0.7)/0.25,0),1);
+    }
   }
 
   // 글자에서 오는 길
   if(isRead && !examOn){
     ctx.strokeStyle='rgba(125,211,252,'+(cur?0.9:0.35)+')';
     ctx.lineWidth=2+OUT*16; ctx.lineCap='round';
-    for(const i of [4,3,0,5]){
+    for(const i of [2,3,0,1]){
       ctx.beginPath(); ctx.moveTo(bx+96,by-14+i*6);
       ctx.quadraticCurveTo((bx+nx)/2,by-46, nx+NODES[i].x,ny+NODES[i].y); ctx.stroke(); }
   }
