@@ -235,7 +235,7 @@ function drawRow(yT,title,stim,fire,t){
 }
 
 function cap(t){
-  if(t<2)  return 'love를 아홉 번 읽습니다. 위는 한자리에서, 아래는 사이를 띄워 가며 읽습니다.';
+  if(t<2)  return 'petrichor를 아홉 번 읽습니다. 위는 한자리에서, 아래는 사이를 띄워 가며 읽습니다.';
   if(t<9)  return '신호가 핵까지 닿으면 세포가 새 단백질을 만듭니다. 한 번 만들고 나면 한동안 더 만들지 못합니다.';
   if(t<13) return '위쪽은 더 만들지 못하는 동안 나머지 여덟 번을 다 읽어버렸습니다.';
   if(t<22) return '아래쪽은 쉬는 사이에 다시 만들 수 있게 되었습니다. 그래서 두 번째 단백질이 나옵니다.';
@@ -251,8 +251,8 @@ function frame(now){
   ctx.fillStyle='#0b0f16'; ctx.fillRect(0,0,1600,900);
   ctx.strokeStyle='#1a2230'; ctx.lineWidth=2;
   ctx.beginPath(); ctx.moveTo(50,430); ctx.lineTo(1550,430); ctx.stroke();
-  drawRow(0,  'love를 연달아 아홉 번 읽기', S_MASS, F_MASS, t);
-  drawRow(440,'love를 세 번 읽고 쉬었다가, 다시 세 번 읽고 쉬었다가, 다시 세 번 읽기', S_SPACE,F_SPACE,t);
+  drawRow(0,  'petrichor를 연달아 아홉 번 읽기', S_MASS, F_MASS, t);
+  drawRow(440,'petrichor를 세 번 읽고 쉬었다가, 다시 세 번 읽고 쉬었다가, 다시 세 번 읽기', S_SPACE,F_SPACE,t);
   ctx.textAlign='center';
   ctx.fillStyle='#c4cedb'; ctx.font='400 24px Pretendard,"Noto Sans KR",sans-serif';
   ctx.fillText(cap(t),800,872);
