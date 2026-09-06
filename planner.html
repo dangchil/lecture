@@ -77,9 +77,15 @@ input[type=text]:focus,input[type=time]:focus{outline:none;background:#f7fbfd;bo
 .daynum{display:block;width:100%;background:none;border:none;font-size:14px;font-weight:700;
   padding:3px 0 0 4px;text-align:left;color:var(--ink);}
 .daymarks{display:flex;gap:0;padding:0 2px;}
-.markbtn{font-size:13px;background:none;border:none;padding:2px 3px;opacity:.25;}
+.markbtn{font-size:17px;background:none;border:none;padding:2px 3px;opacity:.3;line-height:1;}
 .markbtn.on{opacity:1;}
+.markbtn.on[data-mark="rest"]{color:#d62828;font-size:24px;}
+.markbtn.on[data-mark="run"]{color:#1d4ed8;font-size:24px;}
 .dot{position:absolute;bottom:4px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--c3);}
+.daylabels{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:1px;pointer-events:none;z-index:5;overflow:visible;}
+.daylabel-rest{color:#d62828;font-weight:900;font-size:14px;white-space:nowrap;transform:rotate(-15deg);}
+.daylabel-run{color:#1d4ed8;font-weight:900;font-size:14px;white-space:nowrap;}
 .calnote{font-size:12px;color:var(--sub);margin:8px 0 16px;text-align:center;line-height:1.6;}
 
 .reviewsubj{margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--line);}
@@ -278,7 +284,7 @@ function renderToday(){
       <div class="datelabel">${label}</div>
       <button class="navbtn" id="nextDay">›</button>
     </div>
-    <button class="todaybtn" id="gotoToday">오늘로</button>
+    <button class="todaybtn" id="gotoToday">오늘로 가기</button>
 
     <div class="box b1"><div class="hd c1">오늘의 분량<small>다 채웠으면 그만한다. 미완료가 계속 많아지면 분량을 줄인다.</small></div>
       <table>
@@ -395,12 +401,16 @@ function renderMonth(){
     const dateStr=`${y}-${pad(mi+1)}-${pad(dnum)}`;
     const mark=monthData.calendar[dnum]||{rest:false,run:false};
     const complete=dayComplete(dateStr);
+    const labels=[];
+    if(mark.rest) labels.push('<span class="daylabel-rest">쉬는 날!</span>');
+    if(mark.run) labels.push('<span class="daylabel-run">달리기</span>');
     return `<td>
       <button type="button" class="daynum" data-day="${dnum}">${dnum}</button>
       <div class="daymarks">
         <button type="button" class="markbtn ${mark.rest?'on':''}" data-mark="rest" data-day="${dnum}">★</button>
         <button type="button" class="markbtn ${mark.run?'on':''}" data-mark="run" data-day="${dnum}">○</button>
       </div>
+      ${labels.length?`<div class="daylabels">${labels.join('')}</div>`:''}
       ${complete?'<span class="dot"></span>':''}
     </td>`;
   }
