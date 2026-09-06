@@ -72,20 +72,20 @@ input[type=text]:focus,input[type=time]:focus{outline:none;background:#f7fbfd;bo
 
 .cal{width:100%;border-collapse:collapse;table-layout:fixed;}
 .cal th{padding:6px 0;font-size:12px;background:var(--c5);color:#fff;font-weight:700;}
-.cal td{border:1px solid var(--line);vertical-align:top;padding:2px;height:60px;position:relative;}
+.cal td{border:1px solid var(--line);vertical-align:top;padding:2px;height:auto;min-height:80px;position:relative;overflow:hidden;}
 .cal td.empty{background:#f7f6f2;}
 .daynum{display:block;width:100%;background:none;border:none;font-size:14px;font-weight:700;
   padding:3px 0 0 4px;text-align:left;color:var(--ink);}
 .daymarks{display:flex;gap:0;padding:0 2px;}
 .markbtn{font-size:17px;background:none;border:none;padding:2px 3px;opacity:.3;line-height:1;}
 .markbtn.on{opacity:1;}
-.markbtn.on[data-mark="rest"]{color:#d62828;font-size:24px;}
-.markbtn.on[data-mark="run"]{color:#1d4ed8;font-size:24px;}
+.markbtn.on[data-mark="rest"]{color:#d62828;font-size:22px;}
+.markbtn.on[data-mark="run"]{color:#1d4ed8;font-size:22px;}
 .dot{position:absolute;bottom:4px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--c3);}
-.daylabels{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;gap:1px;pointer-events:none;z-index:5;overflow:visible;}
-.daylabel-rest{color:#d62828;font-weight:900;font-size:14px;white-space:nowrap;transform:rotate(-15deg);}
-.daylabel-run{color:#1d4ed8;font-weight:900;font-size:14px;white-space:nowrap;}
+.daylabels{position:absolute;left:1px;right:1px;top:38px;display:flex;flex-direction:column;
+  align-items:center;justify-content:flex-start;gap:1px;pointer-events:none;overflow:hidden;z-index:2;}
+.daylabel-rest{color:#d62828;font-weight:800;font-size:11px;white-space:nowrap;transform:rotate(-8deg);line-height:1.2;}
+.daylabel-run{color:#1d4ed8;font-weight:800;font-size:11px;white-space:nowrap;line-height:1.2;}
 .calnote{font-size:12px;color:var(--sub);margin:8px 0 16px;text-align:center;line-height:1.6;}
 
 .reviewsubj{margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--line);}
@@ -399,7 +399,7 @@ function renderMonth(){
 
   function dayCell(dnum){
     const dateStr=`${y}-${pad(mi+1)}-${pad(dnum)}`;
-    const mark=monthData.calendar[dnum]||{rest:false,run:false};
+    const mark=monthData.calendar[dateStr]||{rest:false,run:false};
     const complete=dayComplete(dateStr);
     const labels=[];
     if(mark.rest) labels.push('<span class="daylabel-rest">쉬는 날!</span>');
@@ -407,8 +407,8 @@ function renderMonth(){
     return `<td>
       <button type="button" class="daynum" data-day="${dnum}">${dnum}</button>
       <div class="daymarks">
-        <button type="button" class="markbtn ${mark.rest?'on':''}" data-mark="rest" data-day="${dnum}">★</button>
-        <button type="button" class="markbtn ${mark.run?'on':''}" data-mark="run" data-day="${dnum}">○</button>
+        <button type="button" class="markbtn ${mark.rest?'on':''}" data-mark="rest" data-date="${dateStr}">★</button>
+        <button type="button" class="markbtn ${mark.run?'on':''}" data-mark="run" data-date="${dateStr}">○</button>
       </div>
       ${labels.length?`<div class="daylabels">${labels.join('')}</div>`:''}
       ${complete?'<span class="dot"></span>':''}
@@ -478,11 +478,11 @@ function bindMonthEvents(monthStr,monthData){
   });
   $$('#tab-month .markbtn').forEach(btn=>{
     btn.onclick=()=>{
-      const dnum=btn.dataset.day,kind=btn.dataset.mark;
-      if(!monthData.calendar[dnum]) monthData.calendar[dnum]={rest:false,run:false};
-      monthData.calendar[dnum][kind]=!monthData.calendar[dnum][kind];
+      const dateStr=btn.dataset.date,kind=btn.dataset.mark;
+      if(!monthData.calendar[dateStr]) monthData.calendar[dateStr]={rest:false,run:false};
+      monthData.calendar[dateStr][kind]=!monthData.calendar[dateStr][kind];
       saveMonth(monthStr,monthData);
-      btn.classList.toggle('on');
+      renderMonth(); // 버튼 색과 글자를 항상 같은 데이터에서 다시 그려 어긋나지 않게 한다
     };
   });
   $$('#tab-month [data-dist]').forEach(el=>{
