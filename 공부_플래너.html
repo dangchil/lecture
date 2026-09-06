@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>공부 플래너</title>
+<style>
+@page { size: A4; margin: 12mm 12mm 10mm 12mm; }
+* { box-sizing: border-box; }
+body { font-family:'Noto Sans CJK KR','Noto Sans KR','Malgun Gothic',sans-serif; color:#23231f; margin:0; font-size:10pt; background:#fff; }
+.page { width:186mm; margin:0 auto; break-after:page; page-break-after:always; padding-bottom:6mm; }
+.page:last-child { break-after:auto; page-break-after:auto; }
+h1 { font-size:18pt; font-weight:900; margin:0 0 1.5mm; letter-spacing:-0.5px; }
+.sub { font-size:8.8pt; color:#6f6f67; margin-bottom:4mm; line-height:1.6; }
+.box { border:1.2px solid #2a2a26; border-radius:4px; margin-bottom:4mm; overflow:hidden; }
+.box .hd { color:#fff; padding:2mm 3mm; font-size:10pt; font-weight:700; line-height:1.55; }
+.box .hd small { display:block; font-weight:400; opacity:.92; font-size:8.4pt; margin-top:0.4mm; }
+.c1 { background:#1f6f8b; }   /* 분량: 짙은 청록 */
+.c2 { background:#2f5fa8; }   /* 블록: 파랑 */
+.c3 { background:#3b8a4e; }   /* 인출: 초록 */
+.c4 { background:#c9702a; }   /* 하루: 주황 */
+.c5 { background:#7a4fb0; }   /* 한 달: 보라 */
+.c6 { background:#8a6a2e; }   /* 회독: 황토 */
+.c7 { background:#a3474f; }   /* 방해: 붉은 벽돌 */
+.b1 { border-color:#1f6f8b; } .b2 { border-color:#2f5fa8; } .b3 { border-color:#3b8a4e; }
+.b4 { border-color:#c9702a; } .b5 { border-color:#7a4fb0; } .b6 { border-color:#8a6a2e; } .b7 { border-color:#a3474f; } .b7 td { height:8.6mm; }
+table { width:100%; border-collapse:collapse; }
+td, th { border-bottom:0.6px solid #d2d1c8; padding:0 2.2mm; height:10.5mm; vertical-align:middle; font-size:9.2pt; }
+th { font-weight:500; color:#5e5e57; font-size:8.2pt; height:6.5mm; background:#f5f4ef; }
+td.c, th.c { text-align:center; }
+tr:last-child td { border-bottom:none; }
+.chk { display:inline-block; width:4.4mm; height:4.4mm; border:1.2px solid #2a2a26; border-radius:1.2px; vertical-align:middle; background:#fff; }
+.lbl { font-size:8pt; color:#5e5e57; margin-right:1mm; }
+.row { display:flex; gap:4mm; }
+.row > * { flex:1; }
+.rules p { margin:0 0 3mm; font-size:10.2pt; line-height:1.75; padding-left:8mm; text-indent:-8mm; }
+.rules p b { color:#1f6f8b; }
+.num { display:inline-block; width:6mm; height:6mm; line-height:6mm; text-align:center; border-radius:50%; background:#1f6f8b; color:#fff; font-weight:700; font-size:9pt; margin-right:2mm; text-indent:0; }
+.cal { width:100%; border-collapse:collapse; table-layout:fixed; }
+.cal th { height:7mm; background:#7a4fb0; color:#fff; border:0.6px solid #7a4fb0; }
+.cal td { height:18.5mm; border:0.6px solid #a9a8a0; vertical-align:top; padding:1.2mm; font-size:8pt; }
+.cal td .d { display:inline-block; width:6.5mm; height:6.5mm; border:0.8px solid #b7b6ad; border-radius:1px; }
+.prog td { height:7.4mm; }
+.prog td.subj { height:14.8mm; }
+.cell { display:inline-block; width:9.2mm; height:5.6mm; border:1px solid #8a6a2e; margin-right:0.8mm; text-align:center; font-size:7.5pt; line-height:5.6mm; color:#8a6a2e; }
+.day td { height:10mm; font-size:9.2pt; }
+.foot { text-align:center; font-size:10pt; font-weight:700; margin-top:3mm; letter-spacing:0.5px; color:#1f6f8b; }
+.note { font-size:8.2pt; color:#6f6f67; padding:1.6mm 3mm; }
+.rec td { height:10mm; }
+.rec .lab { font-weight:600; font-size:9.4pt; color:#2f5f3a; width:38mm; }
+.stack { text-align:right; width:30mm; line-height:1.9; }
+@media screen { body { background:#eeede8; padding:10mm 0; } .page { min-height:275mm; background:#fff; padding:12mm; box-shadow:0 2px 10px rgba(0,0,0,.12); margin-bottom:10mm; } }
+</style></head><body>
+
+<!-- 1. 쓰는 법 -->
+<div class="page">
+  <h1>공부 플래너</h1>
+  <div class="box b1"><div class="hd c1">이 플래너 사용법</div>
+    <div class="rules" style="padding:4mm 4mm 2mm">
+      <p><span class="num">1</span>먼저 <b>한 달</b> 달력에 쉬는 날과 달리는 날을 표시한다. 쉬는 날은 날짜를 쓰고 별표, 달리는 날은 날짜를 쓰고 동그라미다. 쉬는 날은 반나절이나 하루 전체로 미리 정해 두고, 그날은 걱정 없이 논다.</p>
+      <p><span class="num">2</span>아침에 <b>오늘</b> 장을 펴서 월일을 쓰고, 오늘 공부할 분량을 적는다. 시간이 아니라 분량이다. 과목과 범위(몇 쪽까지 또는 어느 단원까지)를 쓴다. 처음 두세 주는 쉽게 채울 수 있는 분량만 적는다. 저녁에 그 분량을 다 했으면 완료, 못 했으면 미완료에 체크한다. 미완료가 계속 많아지면 분량을 줄인다.</p>
+      <p><span class="num">3</span>아침에 책상에 앉자마자 <b>3일 전 공부한 내용</b>과 <b>10일 전 공부한 내용</b>을 펼친다. 그날 공부한 내용의 제목과 목차만 보고 내용을 머릿속에서 떠올려 본다. 생각나지 않는 부분은 책이나 노트를 보고 확인한다. 떠올려 보기와 확인하기에 각각 체크한다.</p>
+      <p><span class="num">4</span><b>100분 블록</b>은 100분 동안 공부한 내용을 적고, 쉬는 시간에 휴대전화 없이 걸으면서 방금 배운 것을 꺼내 봤으면 체크한다. 떠올리다 막힌 것이 있으면 적어 두고, 돌아와서 확인했으면 체크한다.</p>
+      <p><span class="num">5</span><b>오늘 하루</b> 칸의 윗줄은 잠들기 전에 채운다. 오늘 공부가 잘 된 정도, 낮잠, 점심, 커피, 달리기, 휴대전화에 대한 목록이다. 아랫줄의 어젯밤 잠들기 전 인출, 잠든 시각, 일어난 시각은 다음 날 아침에 채운다.</p>
+      <p><span class="num">6</span>잠은 여섯 시간 이상 잔다. 낮잠은 20분을 넘기지 않는다. 커피는 오후 두 시 전까지만 마신다. 달리기는 주 3회 30분이다.</p>
+    </div>
+  </div>
+  <div class="foot">공부는 반복이다. 공부는 인출이다.</div>
+</div>
+
+<!-- 2. 한 달 -->
+<div class="page">
+  <h1>한 달 &nbsp;<span style="font-weight:400;font-size:12pt;color:#6f6f67">______년 ____월</span></h1>
+  <div class="sub">쉬는 날은 해당하는 날에 날짜를 쓰고 별표를 그린다. 달리는 날은 날짜를 쓰고 동그라미를 그린다.</div>
+  <table class="cal">
+    <tr><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th><th>일</th></tr>
+    <tr><td><span class="d"></span></td><td><span class="d"></span></td><td><span class="d"></span></td><td><span class="d"></span></td><td><span class="d"></span></td><td><span class="d"></span></td><td><span class="d"></span></td></tr>
+    <tr><td><span class="d"></span></td><td><span class="d"></span></td><td><span class="d"></span></td><td><span class="d"></span></td><td><span class="d"></span></td><td><span class="d"></span></td><td><span class="d"></span></td></tr>
+    <tr><td><span class="d"></span></td><td><span class="d"></span></td><td><span class="d"></span></td><td><span class="d"></span></td><td><span class="d"></span></td><td><span class="d"></span></td><td><span class="d"></span></td></tr>
+    <tr><td><span class="d"></span></td><td><span class="d"></span></td><td><span class="d"></span></td><td><span class="d"></span></td><td><span class="d"></span></td><td><span class="d"></span></td><td><span class="d"></span></td></tr>
+    <tr><td><span class="d"></span></td><td><span class="d"></span></td><td><span class="d"></span></td><td><span class="d"></span></td><td><span class="d"></span></td><td><span class="d"></span></td><td><span class="d"></span></td></tr>
+  </table>
+  <div class="note">★ 쉬는 날 (반나절 또는 하루 전체, 미리 날짜를 정한다) &nbsp;&nbsp; ○ 달리는 날</div>
+
+  <div class="box b7"><div class="hd c7">이번 달, 내 공부를 방해하는 것과 미리 정한 대응법</div>
+    <table>
+      <tr><th style="width:50%">방해하는 것</th><th>대응법</th></tr>
+      <tr><td></td><td></td></tr>
+      <tr><td></td><td></td></tr>
+      <tr><td></td><td></td></tr>
+      <tr><td></td><td></td></tr>
+      <tr><td></td><td></td></tr>
+    </table>
+  </div>
+  <div class="box b6"><div class="hd c6">회독 진행<small>1회독은 무슨 말인지 아는 단계, 2회독은 문제를 풀 수 있는 단계, 3회독부터 백지에 꺼낼 수 있는 단계. 회독을 마칠 때마다 칸을 칠한다.</small></div>
+    <table class="prog">
+      <tr><th style="width:20%">과목</th><th style="width:40%">기본서</th><th style="width:40%">문제집</th></tr>
+      <tr><td class="subj" rowspan="2"></td><td><span class="cell">1</span><span class="cell">2</span><span class="cell">3</span><span class="cell">4</span><span class="cell">5</span></td><td><span class="cell">1</span><span class="cell">2</span><span class="cell">3</span><span class="cell">4</span><span class="cell">5</span></td></tr>
+      <tr><td><span class="cell">1</span><span class="cell">2</span><span class="cell">3</span><span class="cell">4</span><span class="cell">5</span></td><td><span class="cell">1</span><span class="cell">2</span><span class="cell">3</span><span class="cell">4</span><span class="cell">5</span></td></tr>
+      <tr><td class="subj" rowspan="2" style="border-top:0.6px solid #d2d1c8"></td><td style="border-top:0.6px solid #d2d1c8"><span class="cell">1</span><span class="cell">2</span><span class="cell">3</span><span class="cell">4</span><span class="cell">5</span></td><td style="border-top:0.6px solid #d2d1c8"><span class="cell">1</span><span class="cell">2</span><span class="cell">3</span><span class="cell">4</span><span class="cell">5</span></td></tr>
+      <tr><td><span class="cell">1</span><span class="cell">2</span><span class="cell">3</span><span class="cell">4</span><span class="cell">5</span></td><td><span class="cell">1</span><span class="cell">2</span><span class="cell">3</span><span class="cell">4</span><span class="cell">5</span></td></tr>
+      <tr><td class="subj" rowspan="2" style="border-top:0.6px solid #d2d1c8"></td><td style="border-top:0.6px solid #d2d1c8"><span class="cell">1</span><span class="cell">2</span><span class="cell">3</span><span class="cell">4</span><span class="cell">5</span></td><td style="border-top:0.6px solid #d2d1c8"><span class="cell">1</span><span class="cell">2</span><span class="cell">3</span><span class="cell">4</span><span class="cell">5</span></td></tr>
+      <tr><td><span class="cell">1</span><span class="cell">2</span><span class="cell">3</span><span class="cell">4</span><span class="cell">5</span></td><td><span class="cell">1</span><span class="cell">2</span><span class="cell">3</span><span class="cell">4</span><span class="cell">5</span></td></tr>
+    </table>
+    <div class="note">3회독에서 멈추면 가장 힘든 구간만 지나고 시냅스가 가장 잘 만들어지는 구간은 버리는 셈이다. 4회독과 5회독을 합쳐도 1회독보다 짧다.</div>
+  </div>
+
+  </div>
+</div>
+
+<!-- 3. 오늘 -->
+<div class="page">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end">
+    <h1>오늘 &nbsp;<span style="font-weight:400;font-size:12pt;color:#6f6f67">____월 ____일 (&nbsp;&nbsp;&nbsp;)</span></h1>
+    <div style="font-size:8.8pt;color:#1f6f8b;font-weight:600;margin-bottom:2mm">시간이 아니라 분량</div>
+  </div>
+
+  <div class="box b1"><div class="hd c1">오늘의 분량<small>다 채웠으면 그만한다. 미완료가 계속 많아지면 분량을 줄인다.</small></div>
+    <table>
+      <tr><th style="width:20%">과목</th><th>범위 (몇 쪽까지 또는 어느 단원까지)</th><th class="c" style="width:11%">완료</th><th class="c" style="width:11%">미완료</th></tr>
+      <tr><td></td><td></td><td class="c"><span class="chk"></span></td><td class="c"><span class="chk"></span></td></tr>
+      <tr><td></td><td></td><td class="c"><span class="chk"></span></td><td class="c"><span class="chk"></span></td></tr>
+      <tr><td></td><td></td><td class="c"><span class="chk"></span></td><td class="c"><span class="chk"></span></td></tr>
+      <tr><td></td><td></td><td class="c"><span class="chk"></span></td><td class="c"><span class="chk"></span></td></tr>
+    </table>
+  </div>
+
+  <div class="box b2"><div class="hd c2">100분 블록<small>100분 공부하고 15분 쉰다. 쉬는 시간에는 휴대전화 없이 걸으면서 방금 배운 것을 꺼내 본다.</small></div>
+    <table>
+      <tr><th class="c" style="width:8%">블록</th><th>공부한 내용</th><th class="c" style="width:14%">쉬는 시간 인출</th><th style="width:34%">막힌 것 (돌아와서 확인)</th></tr>
+      <tr><td class="c">1</td><td></td><td class="c"><span class="chk"></span></td><td><span class="chk"></span></td></tr>
+      <tr><td class="c">2</td><td></td><td class="c"><span class="chk"></span></td><td><span class="chk"></span></td></tr>
+      <tr><td class="c">3</td><td></td><td class="c"><span class="chk"></span></td><td><span class="chk"></span></td></tr>
+      <tr><td class="c">4</td><td></td><td class="c"><span class="chk"></span></td><td><span class="chk"></span></td></tr>
+      <tr><td class="c">5</td><td></td><td class="c"><span class="chk"></span></td><td><span class="chk"></span></td></tr>
+    </table>
+  </div>
+
+  <div class="box b3"><div class="hd c3">인출해 보기<small>목차나 제목만 보고 내용을 떠올려 본다. 생각나지 않는 부분은 책이나 노트를 보고 확인한다. 오늘 것은 잠들기 전에, 3일 전과 10일 전 것은 아침에 한다.</small></div>
+    <table>
+      <tr><th style="width:30%"></th><th></th><th class="c" style="width:15%">떠올려 보기</th><th class="c" style="width:15%">확인하기</th></tr>
+      <tr class="rec"><td class="lab">오늘 공부한 내용</td><td></td><td class="c"><span class="chk"></span></td><td class="c"><span class="chk"></span></td></tr>
+      <tr class="rec"><td class="lab">3일 전 공부한 내용</td><td></td><td class="c"><span class="chk"></span></td><td class="c"><span class="chk"></span></td></tr>
+      <tr class="rec"><td class="lab">10일 전 공부한 내용</td><td></td><td class="c"><span class="chk"></span></td><td class="c"><span class="chk"></span></td></tr>
+    </table>
+  </div>
+
+  <div class="box b4"><div class="hd c4">오늘 하루<small>윗줄은 잠들기 전에, 아랫줄은 다음 날 아침에 채운다.</small></div>
+    <table class="day">
+      <tr>
+        <td>낮잠 20분 이내 <span class="chk"></span></td>
+        <td>점심 가볍게 <span class="chk"></span></td>
+        <td>커피는 오후 두 시 전까지 <span class="chk"></span></td>
+      </tr>
+      <tr>
+        <td>달리기 30분 <span class="chk"></span></td>
+        <td>쉬는 시간에 휴대전화 안 봄 <span class="chk"></span></td>
+        <td>오늘 공부가 잘 된 정도 &nbsp;1 · 2 · 3 · 4 · 5</td>
+      </tr>
+      <tr style="border-top:1.2px solid #c9702a">
+        <td>어젯밤 잠들기 전 인출 <span class="chk"></span></td>
+        <td>잠든 시각 ______ : ______</td>
+        <td>일어난 시각 ______ : ______</td>
+      </tr>
+    </table>
+  </div>
+  <div class="foot">오늘 분량을 채웠으면 남은 시간은 놀고, 밤에는 자라. 그것까지가 오늘의 공부다.</div>
+</div>
+
+</body></html>
