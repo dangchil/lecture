@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>공부 플래너</title>
+<style>
+:root{
+  --c1:#1f6f8b; --c2:#2f5fa8; --c3:#3b8a4e; --c4:#c9702a; --c5:#7a4fb0; --c6:#8a6a2e; --c7:#a3474f;
+  --ink:#23231f; --sub:#6f6f67; --line:#d2d1c8; --bg:#eeede8; --card:#fff;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:'Noto Sans KR','Malgun Gothic',system-ui,sans-serif;}
+body{padding-bottom:40px;font-size:16px;line-height:1.5;-webkit-text-size-adjust:100%;}
+button,input,textarea{font-family:inherit;}
+
+.topbar{position:sticky;top:0;background:var(--card);z-index:10;display:flex;align-items:center;
+  justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line);}
+.topbar h1{font-size:18px;margin:0;font-weight:900;}
+.iobtns button{margin-left:6px;padding:8px 10px;border:1.5px solid var(--ink);background:#fff;
+  border-radius:6px;font-size:13px;font-weight:700;}
+
+.tabs{position:sticky;top:49px;background:var(--card);z-index:9;display:flex;border-bottom:1px solid var(--line);}
+.tabbtn{flex:1;padding:13px 0;border:none;background:none;font-size:15px;font-weight:700;
+  color:var(--sub);border-bottom:3px solid transparent;}
+.tabbtn.active{color:var(--ink);border-color:var(--c5);}
+
+main{max-width:480px;margin:0 auto;padding:14px;}
+.box{border:1.5px solid var(--ink);border-radius:8px;margin-bottom:16px;overflow:hidden;background:var(--card);}
+.hd{color:#fff;padding:10px 12px;font-weight:700;font-size:15px;line-height:1.5;}
+.hd small{display:block;font-weight:400;opacity:.92;font-size:12.5px;margin-top:2px;}
+.b1{border-color:var(--c1)} .b2{border-color:var(--c2)} .b3{border-color:var(--c3)}
+.b4{border-color:var(--c4)} .b5{border-color:var(--c5)} .b6{border-color:var(--c6)} .b7{border-color:var(--c7)}
+.c1{background:var(--c1)} .c2{background:var(--c2)} .c3{background:var(--c3)}
+.c4{background:var(--c4)} .c5{background:var(--c5)} .c6{background:var(--c6)} .c7{background:var(--c7)}
+
+table{width:100%;border-collapse:collapse;}
+td,th{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;font-size:14px;vertical-align:middle;}
+th{background:#f5f4ef;color:var(--sub);font-weight:600;font-size:12px;}
+tr:last-child td{border-bottom:none;}
+.c{text-align:center;}
+
+input[type=text],input[type=time],textarea{width:100%;border:none;background:transparent;
+  font-size:14.5px;padding:6px 3px;color:var(--ink);border-bottom:1px dashed var(--line);}
+input[type=text]:focus,input[type=time]:focus{outline:none;background:#f7fbfd;border-color:var(--c1);}
+
+.cb{display:inline-flex;align-items:center;justify-content:center;padding:6px;cursor:pointer;}
+.cb input{position:absolute;opacity:0;width:1px;height:1px;}
+.chk{display:inline-block;width:27px;height:27px;border:2px solid var(--ink);border-radius:5px;
+  background:#fff;position:relative;flex-shrink:0;}
+.cb input:checked + .chk{background:var(--ink);}
+.cb input:checked + .chk::after{content:'✓';position:absolute;inset:0;color:#fff;
+  font-size:18px;line-height:23px;text-align:center;}
+
+.rules p{margin:0 0 12px;font-size:15px;line-height:1.7;padding-left:30px;text-indent:-30px;}
+.rules p b{color:var(--c1);}
+.num{display:inline-block;width:22px;height:22px;line-height:22px;text-align:center;border-radius:50%;
+  background:var(--c1);color:#fff;font-weight:700;font-size:12.5px;margin-right:6px;text-indent:0;}
+.foot{text-align:center;font-size:15px;font-weight:700;margin:14px 0 6px;color:var(--c1);}
+.note{font-size:12.5px;color:var(--sub);padding:6px 12px 12px;}
+
+.datebar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;}
+.datebar .navbtn{font-size:22px;background:none;border:none;padding:6px 14px;color:var(--c5);}
+.datebar .datelabel{font-size:17px;font-weight:800;flex:1;text-align:center;}
+.todaybtn{display:block;margin:0 auto 16px;padding:8px 16px;border:1.5px solid var(--c5);
+  color:var(--c5);background:#fff;border-radius:20px;font-size:13px;font-weight:700;}
+
+.monthbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.monthbar .navbtn{font-size:22px;background:none;border:none;padding:6px 14px;color:var(--c5);}
+.monthbar .monthlabel{font-weight:800;font-size:17px;}
+
+.cal{width:100%;border-collapse:collapse;table-layout:fixed;}
+.cal th{padding:6px 0;font-size:12px;background:var(--c5);color:#fff;font-weight:700;}
+.cal td{border:1px solid var(--line);vertical-align:top;padding:2px;height:60px;position:relative;}
+.cal td.empty{background:#f7f6f2;}
+.daynum{display:block;width:100%;background:none;border:none;font-size:14px;font-weight:700;
+  padding:3px 0 0 4px;text-align:left;color:var(--ink);}
+.daymarks{display:flex;gap:0;padding:0 2px;}
+.markbtn{font-size:13px;background:none;border:none;padding:2px 3px;opacity:.25;}
+.markbtn.on{opacity:1;}
+.dot{position:absolute;bottom:4px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--c3);}
+.calnote{font-size:12px;color:var(--sub);margin:8px 0 16px;text-align:center;line-height:1.6;}
+
+.reviewsubj{margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--line);}
+.reviewsubj:last-child{border-bottom:none;margin-bottom:0;}
+.subjname{font-weight:700;font-size:15px;padding:6px 3px;margin-bottom:4px;}
+.reviewrow{display:flex;align-items:center;gap:8px;padding:4px 0;}
+.reviewrow .lbl{width:46px;font-size:12px;color:var(--sub);flex-shrink:0;}
+.cell5{display:flex;gap:5px;}
+.cellbtn{width:28px;height:28px;border:1.5px solid var(--c6);border-radius:5px;background:#fff;
+  color:var(--c6);font-size:12px;line-height:1;font-weight:700;}
+.cellbtn.on{background:var(--c6);color:#fff;}
+
+.moodrow{display:flex;gap:6px;align-items:center;margin-top:4px;}
+.moodbtn{width:30px;height:30px;border:1.5px solid var(--c4);border-radius:50%;background:#fff;
+  color:var(--c4);font-size:13px;font-weight:700;}
+.moodbtn.on{background:var(--c4);color:#fff;}
+
+.derived{color:#9a978c;font-style:italic;font-size:13.5px;padding:6px 3px;}
+
+.pdfline{text-align:center;margin:18px 0 8px;}
+.pdfline a{color:var(--c1);font-weight:700;text-decoration:underline;font-size:15px;}
+
+@media print{
+  .no-print{display:none!important;}
+  html,body{background:#fff;}
+  main{max-width:186mm;margin:0 auto;padding:12mm;}
+  body{font-size:10pt;}
+  .box{break-inside:avoid;border-color:#2a2a26;}
+  .cal td{height:18mm;}
+  @page{size:A4;margin:10mm;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar no-print">
+  <h1>공부 플래너</h1>
+  <div class="iobtns">
+    <button id="btnExport">내보내기</button>
+    <button id="btnImportTrigger">불러오기</button>
+    <input type="file" id="fileImport" accept="application/json" hidden>
+  </div>
+</div>
+
+<nav class="tabs no-print">
+  <button class="tabbtn" data-tab="usage">사용법</button>
+  <button class="tabbtn" data-tab="month">한 달</button>
+  <button class="tabbtn active" data-tab="today">오늘</button>
+</nav>
+
+<main>
+  <section id="tab-usage" class="tabview" hidden>
+    <div class="box b1"><div class="hd c1">이 플래너 사용법</div>
+      <div class="rules" style="padding:14px">
+        <p><span class="num">1</span>먼저 <b>한 달</b> 달력에 쉬는 날과 달리는 날을 표시한다. 쉬는 날은 날짜를 쓰고 별표, 달리는 날은 날짜를 쓰고 동그라미다. 쉬는 날은 반나절이나 하루 전체로 미리 정해 두고, 그날은 걱정 없이 논다.</p>
+        <p><span class="num">2</span>아침에 <b>오늘</b> 장을 펴서 월일을 쓰고, 오늘 공부할 분량을 적는다. 시간이 아니라 분량이다. 과목과 범위(몇 쪽까지 또는 어느 단원까지)를 쓴다. 처음 두세 주는 쉽게 채울 수 있는 분량만 적는다. 저녁에 그 분량을 다 했으면 완료, 못 했으면 미완료에 체크한다. 미완료가 계속 많아지면 분량을 줄인다.</p>
+        <p><span class="num">3</span>아침에 책상에 앉자마자 <b>3일 전 공부한 내용</b>과 <b>10일 전 공부한 내용</b>을 펼친다. 그날 공부한 내용의 제목과 목차만 보고 내용을 머릿속에서 떠올려 본다. 생각나지 않는 부분은 책이나 노트를 보고 확인한다. 떠올려 보기와 확인하기에 각각 체크한다.</p>
+        <p><span class="num">4</span><b>100분 블록</b>은 100분 동안 공부한 내용을 적고, 쉬는 시간에 휴대전화 없이 걸으면서 방금 배운 것을 꺼내 봤으면 체크한다. 떠올리다 막힌 것이 있으면 적어 두고, 돌아와서 확인했으면 체크한다.</p>
+        <p><span class="num">5</span><b>오늘 하루</b> 칸의 윗줄은 잠들기 전에 채운다. 오늘 공부가 잘 된 정도, 낮잠, 점심, 커피, 달리기, 휴대전화에 대한 목록이다. 아랫줄의 어젯밤 잠들기 전 인출, 잠든 시각, 일어난 시각은 다음 날 아침에 채운다.</p>
+        <p><span class="num">6</span>잠은 여섯 시간 이상 잔다. 낮잠은 20분을 넘기지 않는다. 커피는 오후 두 시 전까지만 마신다. 달리기는 주 3회 30분이다.</p>
+      </div>
+    </div>
+    <div class="foot">공부는 반복이다. 공부는 인출이다.</div>
+    <div class="pdfline no-print"><a href="공부_플래너.pdf" target="_blank">인쇄용 PDF 내려받기</a></div>
+  </section>
+
+  <section id="tab-month" class="tabview" hidden></section>
+
+  <section id="tab-today" class="tabview"></section>
+</main>
+
+<script>
+const PREFIX='planner_';
+const $=(sel,el=document)=>el.querySelector(sel);
+const $$=(sel,el=document)=>[...el.querySelectorAll(sel)];
+const WD=['일','월','화','수','목','금','토'];
+
+function pad(n){return String(n).padStart(2,'0');}
+function fmtDate(d){return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}
+function esc(s){return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function cb(checked,attrs){return `<label class="cb"><input type="checkbox" ${checked?'checked':''} ${attrs}><span class="chk"></span></label>`;}
+
+// ---- 저장소 ----
+function defaultDay(){
+  return {
+    quota:Array.from({length:4},()=>({subject:'',range:'',done:false,undone:false})),
+    blocks:Array.from({length:5},()=>({content:'',recall:false,confirm:false})),
+    retrieval:{
+      today:{content:'',recall:false,confirm:false},
+      d3:{recall:false,confirm:false},
+      d10:{recall:false,confirm:false}
+    },
+    day:{nap:false,lunch:false,coffee:false,run:false,phone:false,mood:0,nightRecall:false,sleepTime:'',wakeTime:''}
+  };
+}
+function loadDay(dateStr){
+  const raw=localStorage.getItem(PREFIX+'day_'+dateStr);
+  return raw?JSON.parse(raw):defaultDay();
+}
+function saveDay(dateStr,data){localStorage.setItem(PREFIX+'day_'+dateStr,JSON.stringify(data));}
+
+function defaultMonth(){
+  return {
+    calendar:{},
+    disturb:Array.from({length:5},()=>({cause:'',response:''})),
+    review:Array.from({length:3},()=>({name:'',basic:[Array(5).fill(false),Array(5).fill(false)],workbook:[Array(5).fill(false),Array(5).fill(false)]}))
+  };
+}
+function loadMonth(monthStr){
+  const raw=localStorage.getItem(PREFIX+'month_'+monthStr);
+  return raw?JSON.parse(raw):defaultMonth();
+}
+function saveMonth(monthStr,data){localStorage.setItem(PREFIX+'month_'+monthStr,JSON.stringify(data));}
+
+function quotaSummary(dateStr){
+  const raw=localStorage.getItem(PREFIX+'day_'+dateStr);
+  if(!raw) return null;
+  const d=JSON.parse(raw);
+  const parts=d.quota.filter(r=>r.subject.trim()||r.range.trim())
+    .map(r=>[r.subject.trim(),r.range.trim()].filter(Boolean).join(' '));
+  return parts.length?parts.join(', '):null;
+}
+function dayComplete(dateStr){
+  const raw=localStorage.getItem(PREFIX+'day_'+dateStr);
+  if(!raw) return false;
+  const d=JSON.parse(raw);
+  return d.quota.some(r=>r.done) && !d.quota.some(r=>r.undone);
+}
+
+// ---- 상태 ----
+let current=new Date();
+let monthCursor=new Date(current.getFullYear(),current.getMonth(),1);
+let activeTab='today';
+
+// ---- 탭 ----
+function switchTab(name){
+  activeTab=name;
+  $$('.tabbtn').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
+  $('#tab-usage').hidden=name!=='usage';
+  $('#tab-month').hidden=name!=='month';
+  $('#tab-today').hidden=name!=='today';
+  if(name==='month') renderMonth();
+  if(name==='today') renderToday();
+}
+$$('.tabbtn').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+
+// ---- 오늘 탭 ----
+function renderToday(){
+  const dateStr=fmtDate(current);
+  const day=loadDay(dateStr);
+  const label=`${current.getMonth()+1}월 ${current.getDate()}일 (${WD[current.getDay()]})`;
+
+  const quotaRows=day.quota.map((r,i)=>`
+    <tr>
+      <td><input type="text" data-q="${i}" data-f="subject" value="${esc(r.subject)}" placeholder="과목"></td>
+      <td><input type="text" data-q="${i}" data-f="range" value="${esc(r.range)}" placeholder="범위"></td>
+      <td class="c">${cb(r.done,`data-q="${i}" data-f="done"`)}</td>
+      <td class="c">${cb(r.undone,`data-q="${i}" data-f="undone"`)}</td>
+    </tr>`).join('');
+
+  const blockRows=day.blocks.map((b,i)=>`
+    <tr>
+      <td class="c">${i+1}</td>
+      <td><input type="text" data-b="${i}" data-f="content" value="${esc(b.content)}"></td>
+      <td class="c">${cb(b.recall,`data-b="${i}" data-f="recall"`)}</td>
+      <td class="c">${cb(b.confirm,`data-b="${i}" data-f="confirm"`)}</td>
+    </tr>`).join('');
+
+  const d3=new Date(current); d3.setDate(d3.getDate()-3);
+  const d10=new Date(current); d10.setDate(d10.getDate()-10);
+  const d3sum=quotaSummary(fmtDate(d3)) ?? '기록 없음';
+  const d10sum=quotaSummary(fmtDate(d10)) ?? '기록 없음';
+
+  const retrievalRows=`
+    <tr class="rec"><td>오늘 공부한 내용</td>
+      <td><input type="text" data-r="today" data-f="content" value="${esc(day.retrieval.today.content)}"></td>
+      <td class="c">${cb(day.retrieval.today.recall,'data-r="today" data-f="recall"')}</td>
+      <td class="c">${cb(day.retrieval.today.confirm,'data-r="today" data-f="confirm"')}</td>
+    </tr>
+    <tr class="rec"><td>3일 전 공부한 내용</td>
+      <td class="derived">${esc(d3sum)}</td>
+      <td class="c">${cb(day.retrieval.d3.recall,'data-r="d3" data-f="recall"')}</td>
+      <td class="c">${cb(day.retrieval.d3.confirm,'data-r="d3" data-f="confirm"')}</td>
+    </tr>
+    <tr class="rec"><td>10일 전 공부한 내용</td>
+      <td class="derived">${esc(d10sum)}</td>
+      <td class="c">${cb(day.retrieval.d10.recall,'data-r="d10" data-f="recall"')}</td>
+      <td class="c">${cb(day.retrieval.d10.confirm,'data-r="d10" data-f="confirm"')}</td>
+    </tr>`;
+
+  const moodBtns=[1,2,3,4,5].map(n=>`<button type="button" class="moodbtn ${day.day.mood===n?'on':''}" data-mood="${n}">${n}</button>`).join('');
+
+  $('#tab-today').innerHTML=`
+    <div class="datebar">
+      <button class="navbtn" id="prevDay">‹</button>
+      <div class="datelabel">${label}</div>
+      <button class="navbtn" id="nextDay">›</button>
+    </div>
+    <button class="todaybtn" id="gotoToday">오늘로</button>
+
+    <div class="box b1"><div class="hd c1">오늘의 분량<small>다 채웠으면 그만한다. 미완료가 계속 많아지면 분량을 줄인다.</small></div>
+      <table>
+        <tr><th>과목</th><th>범위</th><th class="c">완료</th><th class="c">미완료</th></tr>
+        ${quotaRows}
+      </table>
+    </div>
+
+    <div class="box b2"><div class="hd c2">100분 블록<small>100분 공부하고 15분 쉰다. 쉬는 시간에는 휴대전화 없이 걸으면서 방금 배운 것을 꺼내 본다.</small></div>
+      <table>
+        <tr><th class="c">블록</th><th>공부한 내용</th><th class="c">쉬는시간<br>인출</th><th class="c">막힌 것<br>확인</th></tr>
+        ${blockRows}
+      </table>
+    </div>
+
+    <div class="box b3"><div class="hd c3">인출해 보기<small>목차나 제목만 보고 내용을 떠올려 본다. 생각나지 않는 부분은 책이나 노트를 보고 확인한다. 오늘 것은 잠들기 전에, 3일 전과 10일 전 것은 아침에 한다.</small></div>
+      <table>
+        <tr><th></th><th></th><th class="c">떠올려<br>보기</th><th class="c">확인<br>하기</th></tr>
+        ${retrievalRows}
+      </table>
+    </div>
+
+    <div class="box b4"><div class="hd c4">오늘 하루<small>윗줄은 잠들기 전에, 아랫줄은 다음 날 아침에 채운다.</small></div>
+      <table>
+        <tr>
+          <td>낮잠 20분 이내 ${cb(day.day.nap,'data-d="nap"')}</td>
+        </tr>
+        <tr>
+          <td>점심 가볍게 ${cb(day.day.lunch,'data-d="lunch"')}</td>
+        </tr>
+        <tr>
+          <td>커피는 오후 두 시 전까지 ${cb(day.day.coffee,'data-d="coffee"')}</td>
+        </tr>
+        <tr>
+          <td>달리기 30분 ${cb(day.day.run,'data-d="run"')}</td>
+        </tr>
+        <tr>
+          <td>쉬는 시간에 휴대전화 안 봄 ${cb(day.day.phone,'data-d="phone"')}</td>
+        </tr>
+        <tr>
+          <td>오늘 공부가 잘 된 정도<div class="moodrow">${moodBtns}</div></td>
+        </tr>
+        <tr style="border-top:1.2px solid var(--c4)">
+          <td>어젯밤 잠들기 전 인출 ${cb(day.day.nightRecall,'data-d="nightRecall"')}</td>
+        </tr>
+        <tr>
+          <td>잠든 시각 <input type="time" id="sleepTime" value="${esc(day.day.sleepTime)}"></td>
+        </tr>
+        <tr>
+          <td>일어난 시각 <input type="time" id="wakeTime" value="${esc(day.day.wakeTime)}"></td>
+        </tr>
+      </table>
+    </div>
+    <div class="foot">오늘 분량을 채웠으면 남은 시간은 놀고, 밤에는 자라. 그것까지가 오늘의 공부다.</div>
+  `;
+
+  bindTodayEvents(dateStr,day);
+}
+
+function bindTodayEvents(dateStr,day){
+  $('#prevDay').onclick=()=>{current.setDate(current.getDate()-1);renderToday();};
+  $('#nextDay').onclick=()=>{current.setDate(current.getDate()+1);renderToday();};
+  $('#gotoToday').onclick=()=>{current=new Date();renderToday();};
+
+  $$('#tab-today [data-q]').forEach(el=>{
+    el.addEventListener(el.type==='checkbox'?'change':'input',()=>{
+      const i=+el.dataset.q,f=el.dataset.f;
+      day.quota[i][f]=el.type==='checkbox'?el.checked:el.value;
+      saveDay(dateStr,day);
+    });
+  });
+  $$('#tab-today [data-b]').forEach(el=>{
+    el.addEventListener(el.type==='checkbox'?'change':'input',()=>{
+      const i=+el.dataset.b,f=el.dataset.f;
+      day.blocks[i][f]=el.type==='checkbox'?el.checked:el.value;
+      saveDay(dateStr,day);
+    });
+  });
+  $$('#tab-today [data-r]').forEach(el=>{
+    el.addEventListener(el.type==='checkbox'?'change':'input',()=>{
+      const k=el.dataset.r,f=el.dataset.f;
+      day.retrieval[k][f]=el.type==='checkbox'?el.checked:el.value;
+      saveDay(dateStr,day);
+    });
+  });
+  $$('#tab-today [data-d]').forEach(el=>{
+    el.addEventListener('change',()=>{
+      day.day[el.dataset.d]=el.checked;
+      saveDay(dateStr,day);
+    });
+  });
+  $('#sleepTime').addEventListener('input',e=>{day.day.sleepTime=e.target.value;saveDay(dateStr,day);});
+  $('#wakeTime').addEventListener('input',e=>{day.day.wakeTime=e.target.value;saveDay(dateStr,day);});
+  $$('#tab-today .moodbtn').forEach(btn=>{
+    btn.onclick=()=>{
+      const v=+btn.dataset.mood;
+      day.day.mood=day.day.mood===v?0:v;
+      saveDay(dateStr,day);
+      $$('#tab-today .moodbtn').forEach(b=>b.classList.toggle('on',+b.dataset.mood===day.day.mood));
+    };
+  });
+}
+
+// ---- 한 달 탭 ----
+function renderMonth(){
+  const y=monthCursor.getFullYear(),mi=monthCursor.getMonth();
+  const monthStr=`${y}-${pad(mi+1)}`;
+  const monthData=loadMonth(monthStr);
+  const first=new Date(y,mi,1);
+  const startBlank=(first.getDay()+6)%7; // 월요일 시작
+  const totalDays=new Date(y,mi+1,0).getDate();
+
+  function dayCell(dnum){
+    const dateStr=`${y}-${pad(mi+1)}-${pad(dnum)}`;
+    const mark=monthData.calendar[dnum]||{rest:false,run:false};
+    const complete=dayComplete(dateStr);
+    return `<td>
+      <button type="button" class="daynum" data-day="${dnum}">${dnum}</button>
+      <div class="daymarks">
+        <button type="button" class="markbtn ${mark.rest?'on':''}" data-mark="rest" data-day="${dnum}">★</button>
+        <button type="button" class="markbtn ${mark.run?'on':''}" data-mark="run" data-day="${dnum}">○</button>
+      </div>
+      ${complete?'<span class="dot"></span>':''}
+    </td>`;
+  }
+
+  const rows=[]; let row=[];
+  for(let i=0;i<startBlank;i++) row.push('<td class="empty"></td>');
+  for(let dnum=1;dnum<=totalDays;dnum++){
+    row.push(dayCell(dnum));
+    if(row.length===7){ rows.push('<tr>'+row.join('')+'</tr>'); row=[]; }
+  }
+  if(row.length){ while(row.length<7) row.push('<td class="empty"></td>'); rows.push('<tr>'+row.join('')+'</tr>'); }
+
+  const disturbRows=monthData.disturb.map((r,i)=>`
+    <tr>
+      <td><input type="text" data-dist="${i}" data-f="cause" value="${esc(r.cause)}"></td>
+      <td><input type="text" data-dist="${i}" data-f="response" value="${esc(r.response)}"></td>
+    </tr>`).join('');
+
+  function cells5(arr,si,kind,ri){
+    return `<div class="cell5">${arr.map((v,ci)=>`<button type="button" class="cellbtn ${v?'on':''}" data-rev="${si}" data-kind="${kind}" data-ri="${ri}" data-ci="${ci}">${ci+1}</button>`).join('')}</div>`;
+  }
+  const reviewBlocks=monthData.review.map((subj,si)=>`
+    <div class="reviewsubj">
+      <input type="text" class="subjname" placeholder="과목명" data-rev="${si}" value="${esc(subj.name)}">
+      <div class="reviewrow"><span class="lbl">기본서</span>${cells5(subj.basic[0],si,'basic',0)}</div>
+      <div class="reviewrow"><span class="lbl">문제집</span>${cells5(subj.workbook[0],si,'workbook',0)}</div>
+      <div class="reviewrow"><span class="lbl">기본서</span>${cells5(subj.basic[1],si,'basic',1)}</div>
+      <div class="reviewrow"><span class="lbl">문제집</span>${cells5(subj.workbook[1],si,'workbook',1)}</div>
+    </div>`).join('');
+
+  $('#tab-month').innerHTML=`
+    <div class="monthbar">
+      <button class="navbtn" id="prevMonth">‹</button>
+      <div class="monthlabel">${y}년 ${mi+1}월</div>
+      <button class="navbtn" id="nextMonth">›</button>
+    </div>
+    <table class="cal">
+      <tr><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th><th>일</th></tr>
+      ${rows.join('')}
+    </table>
+    <div class="calnote">★ 쉬는 날 (반나절 또는 하루 전체, 미리 날짜를 정한다) &nbsp; ○ 달리는 날 &nbsp; ● 그날 분량 완료</div>
+
+    <div class="box b7"><div class="hd c7">이번 달, 내 공부를 방해하는 것과 미리 정한 대응법</div>
+      <table><tr><th>방해하는 것</th><th>대응법</th></tr>${disturbRows}</table>
+    </div>
+
+    <div class="box b6"><div class="hd c6">회독 진행<small>1회독은 무슨 말인지 아는 단계, 2회독은 문제를 풀 수 있는 단계, 3회독부터 백지에 꺼낼 수 있는 단계. 회독을 마칠 때마다 칸을 칠한다.</small></div>
+      <div style="padding:12px">${reviewBlocks}</div>
+      <div class="note">3회독에서 멈추면 가장 힘든 구간만 지나고 시냅스가 가장 잘 만들어지는 구간은 버리는 셈이다. 4회독과 5회독을 합쳐도 1회독보다 짧다.</div>
+    </div>
+  `;
+
+  bindMonthEvents(monthStr,monthData);
+}
+
+function bindMonthEvents(monthStr,monthData){
+  $('#prevMonth').onclick=()=>{monthCursor.setMonth(monthCursor.getMonth()-1);renderMonth();};
+  $('#nextMonth').onclick=()=>{monthCursor.setMonth(monthCursor.getMonth()+1);renderMonth();};
+
+  $$('#tab-month .daynum').forEach(btn=>{
+    btn.onclick=()=>{
+      current=new Date(monthCursor.getFullYear(),monthCursor.getMonth(),+btn.dataset.day);
+      switchTab('today');
+    };
+  });
+  $$('#tab-month .markbtn').forEach(btn=>{
+    btn.onclick=()=>{
+      const dnum=btn.dataset.day,kind=btn.dataset.mark;
+      if(!monthData.calendar[dnum]) monthData.calendar[dnum]={rest:false,run:false};
+      monthData.calendar[dnum][kind]=!monthData.calendar[dnum][kind];
+      saveMonth(monthStr,monthData);
+      btn.classList.toggle('on');
+    };
+  });
+  $$('#tab-month [data-dist]').forEach(el=>{
+    el.addEventListener('input',()=>{
+      monthData.disturb[+el.dataset.dist][el.dataset.f]=el.value;
+      saveMonth(monthStr,monthData);
+    });
+  });
+  $$('#tab-month .subjname').forEach(el=>{
+    el.addEventListener('input',()=>{
+      monthData.review[+el.dataset.rev].name=el.value;
+      saveMonth(monthStr,monthData);
+    });
+  });
+  $$('#tab-month .cellbtn').forEach(btn=>{
+    btn.onclick=()=>{
+      const si=+btn.dataset.rev,kind=btn.dataset.kind,ri=+btn.dataset.ri,ci=+btn.dataset.ci;
+      monthData.review[si][kind][ri][ci]=!monthData.review[si][kind][ri][ci];
+      saveMonth(monthStr,monthData);
+      btn.classList.toggle('on');
+    };
+  });
+}
+
+// ---- 내보내기 / 불러오기 ----
+$('#btnExport').onclick=()=>{
+  const data={};
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k.startsWith(PREFIX)) data[k]=localStorage.getItem(k);
+  }
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=`planner_backup_${fmtDate(new Date())}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+};
+$('#btnImportTrigger').onclick=()=>$('#fileImport').click();
+$('#fileImport').addEventListener('change',e=>{
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const data=JSON.parse(reader.result);
+      Object.keys(data).forEach(k=>{ if(k.startsWith(PREFIX)) localStorage.setItem(k,data[k]); });
+      alert('불러오기를 완료했습니다.');
+      switchTab(activeTab);
+    }catch(err){ alert('올바른 백업 파일이 아닙니다.'); }
+  };
+  reader.readAsText(file);
+  e.target.value='';
+});
+
+switchTab('today');
+</script>
+</body>
+</html>
